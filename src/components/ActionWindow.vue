@@ -30,6 +30,11 @@
           <button @click.prevent="deleteResource(res.type)">✖</button>
         </div>
       </div>
+      <div class="sep"></div>
+      <p>
+        <label for="image">Цель </label>
+        <input type="file" name="image" @change="onImageSelect">
+      </p>
       <div class="controls">
         <input type="submit" :value="isEditing ? 'Изменить' : 'Добавить'" />
         <button @click.prevent="cancelCallback">Отмена</button>
@@ -41,6 +46,7 @@
 <script>
 import ResourceTypes from "../ResourceTypes.js";
 import { ref } from "vue";
+import localforage from 'localforage';
 
 export default {
   name: "ActionWindow",
@@ -80,15 +86,13 @@ export default {
   data: () => ({
     currentRes: "",
     currentResCount: 0,
-    // resources: [],
-    // date: "2021-08-01",
+    image: null
   }),
   setup(props) {
     var date = ref("2021-08-01");
     var resources = ref([]);
     if (props.isEditing) {
       date = ref(props.editingID);
-
       resources = ref(JSON.parse(JSON.stringify(props.editingData.resources)));
     }
     return { date, resources };
@@ -100,8 +104,19 @@ export default {
         name: this.date,
         resources: JSON.parse(JSON.stringify(this.resources)),
       };
-      if (this.isEditing) this.actionCallback(true, this.editingID, data);
-      else this.actionCallback(false, data);
+      if (this.image !== null) {
+        var fr = new FileReader();
+        fr.onload = () => {
+          localforage.setItem(this.date, fr.result).then(() => {
+            if (this.isEditing) this.actionCallback(true, this.editingID, data);
+            else this.actionCallback(false, {isDone: false, ...data});
+          });
+        }
+        fr.readAsDataURL(this.image);
+      } else {
+        if (!this.isEditing) alert('Выберите картинку цели!');
+        else this.actionCallback(true, this.editingID, data);
+      }
     },
     addResource() {
       if (this.currentRes !== "")
@@ -117,6 +132,9 @@ export default {
       });
       this.resources.splice(index, 1);
     },
+    onImageSelect(e) {
+      this.image = e.target.files[0];
+    }
   },
 };
 </script>
@@ -162,6 +180,7 @@ ul {
 div.sep {
   height: 1px;
   background: rgba(255, 255, 255, 0.5);
+  margin: 5px 0;
 }
 
 input[type="number"] {

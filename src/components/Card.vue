@@ -9,16 +9,23 @@
       </div>
     </div>
     <div class="controls">
+      <button class="grow" :class="isDone ? 'done' : null" @click="toggleDone">Открыть</button>
       <button @click="edit">🖉</button>
       <button @click="del">✖</button>
     </div>
     <space class="space" :width="300" :height="400" />
+    <transition name="fade">
+      <div class="goal" v-if="isDone">
+        <img :src="goalImageSrc">
+      </div>
+    </transition>
   </div>
 </template>
 
 <script>
 import ResourceTypes from '../ResourceTypes.js';
 import Space from './Space.vue';
+import lf from 'localforage';
 
 export default {
   name: 'Card',
@@ -29,6 +36,7 @@ export default {
   props: {
     name: String,
     resources: Array,
+    isDone: Boolean
   },
   methods: {
     edit() {
@@ -37,7 +45,18 @@ export default {
 
     del() {
       this.$emit("delete");
+    },
+
+    toggleDone() {
+      this.$emit("toggleDone");
     }
+  },
+  setup(props) {
+    var imgSrc;
+    lf.getItem(props.name).then(src => {
+      imgSrc = src;
+      return {goalImageSrc: imgSrc};
+    });
   }
 }
 </script>
@@ -95,8 +114,6 @@ export default {
 .res > .name {
   flex-grow: 1;
   margin: 0;
-  /* height: 100%; */
-  /* text-align: center; */
 }
 
 .res > .count {
@@ -113,11 +130,12 @@ export default {
 div.controls {
   display: flex;
   gap: 5px;
-  margin: 5px;
-  width: fit-content;
+  padding: 5px;
+  width: 100%;
   position: absolute;
   bottom: 0;
   right: 0;
+  box-sizing: border-box;
 }
 
 button {
@@ -138,5 +156,30 @@ button:active {
   background: white;
   color: black;
   transition-duration: 0s;
+}
+
+.grow {
+  flex-grow: 1;
+}
+
+.done {
+  background: rgba(0, 255, 0, 0.1);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.goal {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 </style>

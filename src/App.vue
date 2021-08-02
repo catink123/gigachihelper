@@ -10,13 +10,13 @@
 
   <transition name="fade">
     <div class="center darkbg" v-if="showActionWindow">
-        <action-window
-          :actionCallback="manageCard"
-          :cancelCallback="toggleActionWindow"
-          :isEditing="isEditing"
-          :editingID="editingID"
-          :editingData="editingData"
-        />
+      <action-window
+        :actionCallback="manageCard"
+        :cancelCallback="toggleActionWindow"
+        :isEditing="isEditing"
+        :editingID="editingID"
+        :editingData="editingData"
+      />
     </div>
   </transition>
   <transition-group class="container" tag="div" name="cards">
@@ -26,8 +26,10 @@
       :name="card.name"
       :key="card.name"
       :resources="card.resources"
+      :isDone="card.isDone"
       @edit="editCard(card.name)"
       @delete="deleteCard(card.name)"
+      @toggleDone="toggleDone(card.name)"
     />
   </transition-group>
 </template>
@@ -47,39 +49,22 @@ export default {
     editingData: {},
   }),
   setup() {
-    var data = ref([
-      /* {
-        name: "2021-07-31",
-        resources: [
-          {
-            type: "primogem",
-            count: 5,
-          },
-          {
-            type: "mlessSG",
-            count: 10,
-          },
-        ],
-      },
-      {
-        name: "2021-08-31",
-        resources: [
-          {
-            type: "acquaint",
-            count: 50,
-          },
-          {
-            type: "intertwined",
-            count: 33,
-          },
-        ],
-      }, */
-    ]);
+    var data = ref([]);
+
+    var savedData = localStorage.getItem("data");
+    if (savedData !== null) {
+      data.value = JSON.parse(savedData);
+    }
+
+    window.addEventListener("beforeunload", () => {
+      localStorage.setItem("data", JSON.stringify(data.value));
+    })
+
     return { data };
   },
   methods: {
     addCard(data) {
-      var index = this.data.findIndex(val => {
+      var index = this.data.findIndex((val) => {
         if (val.name === data.name) return true;
         return false;
       });
@@ -87,7 +72,7 @@ export default {
         this.data.push(data);
         this.toggleActionWindow();
       } else {
-        alert('Карточка с такой датой уже существует!');
+        alert("Карточка с такой датой уже существует!");
       }
     },
 
@@ -101,7 +86,7 @@ export default {
         this.editingData = readonly(this.data[index]);
         this.isEditing = true;
       } else {
-        this.data[index] = newData;
+        this.data[index] = { ...this.data[index], ...newData };
         this.$forceUpdate();
       }
       this.toggleActionWindow();
@@ -120,6 +105,15 @@ export default {
     manageCard(isEditing, firstArg, secondArg) {
       if (isEditing) this.editCard(firstArg, secondArg);
       else this.addCard(firstArg);
+    },
+
+    toggleDone(id) {
+      var index = this.data.findIndex((val) => {
+        if (val.name === id) return true;
+        return false;
+      });
+      this.data[index].isDone = !this.data[index].isDone;
+      this.$forceUpdate();
     },
 
     toggleActionWindow() {
@@ -185,7 +179,8 @@ div.darkbg {
   transform: translateY(-30px);
 }
 
-.cards-leave-active, .card-enter-active {
+.cards-leave-active,
+.card-enter-active {
   position: absolute;
 }
 
@@ -200,7 +195,8 @@ div.darkbg {
   padding: 5px;
 }
 
-.menu button, .emptyPage button {
+.menu button,
+.emptyPage button {
   padding: 5px;
   border: 1px solid rgba(255, 255, 255, 0.5);
   color: white;
@@ -210,12 +206,14 @@ div.darkbg {
   transition-duration: 0.15s;
 }
 
-.menu button:hover, .emptyPage button:hover {
+.menu button:hover,
+.emptyPage button:hover {
   background: rgba(255, 255, 255, 0.15);
   transition-duration: 0.15s;
 }
 
-.menu button:active, .emptyPage button:active {
+.menu button:active,
+.emptyPage button:active {
   background: white;
   color: black;
   transition-duration: 0s;
