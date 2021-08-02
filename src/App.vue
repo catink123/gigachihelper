@@ -1,26 +1,228 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div class="menu" v-if="data.length > 0">
+    <button @click="toggleActionWindow">Добавить новую карточку</button>
+  </div>
+
+  <div class="center emptyPage" v-else>
+    <p>У вас нет карточек, добавьте одну с помощью кнопки ниже.</p>
+    <button @click="toggleActionWindow">Добавить новую карточку</button>
+  </div>
+
+  <transition name="fade">
+    <div class="center darkbg" v-if="showActionWindow">
+        <action-window
+          :actionCallback="manageCard"
+          :cancelCallback="toggleActionWindow"
+          :isEditing="isEditing"
+          :editingID="editingID"
+          :editingData="editingData"
+        />
+    </div>
+  </transition>
+  <transition-group class="container" tag="div" name="cards">
+    <card
+      class="card"
+      v-for="card in data"
+      :name="card.name"
+      :key="card.name"
+      :resources="card.resources"
+      @edit="editCard(card.name)"
+      @delete="deleteCard(card.name)"
+    />
+  </transition-group>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import ActionWindow from "./components/ActionWindow.vue";
+import Card from "./components/Card.vue";
+import { ref, readonly } from "vue";
 
 export default {
-  name: 'App',
-  components: {
-    HelloWorld
-  }
-}
+  components: { Card, ActionWindow },
+  name: "App",
+  data: () => ({
+    showActionWindow: false,
+    isEditing: false,
+    editingID: "",
+    editingData: {},
+  }),
+  setup() {
+    var data = ref([
+      /* {
+        name: "2021-07-31",
+        resources: [
+          {
+            type: "primogem",
+            count: 5,
+          },
+          {
+            type: "mlessSG",
+            count: 10,
+          },
+        ],
+      },
+      {
+        name: "2021-08-31",
+        resources: [
+          {
+            type: "acquaint",
+            count: 50,
+          },
+          {
+            type: "intertwined",
+            count: 33,
+          },
+        ],
+      }, */
+    ]);
+    return { data };
+  },
+  methods: {
+    addCard(data) {
+      var index = this.data.findIndex(val => {
+        if (val.name === data.name) return true;
+        return false;
+      });
+      if (index === -1) {
+        this.data.push(data);
+        this.toggleActionWindow();
+      } else {
+        alert('Карточка с такой датой уже существует!');
+      }
+    },
+
+    editCard(id, newData) {
+      var index = this.data.findIndex((val) => {
+        if (val.name === id) return true;
+        return false;
+      });
+      if (!newData) {
+        this.editingID = id;
+        this.editingData = readonly(this.data[index]);
+        this.isEditing = true;
+      } else {
+        this.data[index] = newData;
+        this.$forceUpdate();
+      }
+      this.toggleActionWindow();
+    },
+
+    deleteCard(id) {
+      if (window.confirm("Вы уверены, что хотите удалить эту карточку?")) {
+        var index = this.data.findIndex((val) => {
+          if (val.name === id) return true;
+          return false;
+        });
+        this.data.splice(index, 1);
+      }
+    },
+
+    manageCard(isEditing, firstArg, secondArg) {
+      if (isEditing) this.editCard(firstArg, secondArg);
+      else this.addCard(firstArg);
+    },
+
+    toggleActionWindow() {
+      if (this.showActionWindow) {
+        this.editingID = null;
+        this.editingData = {};
+        this.isEditing = false;
+        this.showActionWindow = false;
+      } else {
+        this.showActionWindow = true;
+      }
+    },
+  },
+};
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+body {
+  background: linear-gradient(rgb(15, 55, 107), rgb(80, 128, 192));
+  background-attachment: fixed;
+  height: 100vh;
+  margin: 0;
+}
+
+div.container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+div.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  justify-content: center;
+}
+
+div.darkbg {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.cards-enter-from,
+.cards-leave-to {
+  opacity: 0;
+  transform: translateY(-30px);
+}
+
+.cards-leave-active, .card-enter-active {
+  position: absolute;
+}
+
+.card {
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.menu {
+  display: flex;
+  gap: 5px;
+  padding: 5px;
+}
+
+.menu button, .emptyPage button {
+  padding: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0px 0px 5px 0 rgba(255, 255, 255, 0.5) inset;
+  border-radius: 3px;
+  transition-duration: 0.15s;
+}
+
+.menu button:hover, .emptyPage button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transition-duration: 0.15s;
+}
+
+.menu button:active, .emptyPage button:active {
+  background: white;
+  color: black;
+  transition-duration: 0s;
+}
+
+.emptyPage p {
+  font-family: sans-serif;
+  color: white;
 }
 </style>
