@@ -52,11 +52,14 @@ export default {
     }
   },
   setup(props) {
-    var imgSrc;
-    lf.getItem(props.name).then(src => {
-      imgSrc = src;
-      return {goalImageSrc: imgSrc};
+    var goalImageSrc;
+    lf.getItem(props.name, src => {
+      goalImageSrc = src;
     });
+    return {goalImageSrc};
+  },
+  mounted() {
+    console.log(this.goalImageSrc);
   }
 }
 </script>
@@ -73,7 +76,7 @@ export default {
   border: 15px solid;
   box-shadow: 0px 0px 10px 2px rgba(255, 255, 255, 0.5) inset;
   background: rgba(0, 0, 0, 0.25);
-  background-image: repeating-linear-gradient(45deg, transparent 0px 60px, rgba(255, 255, 255, 0.15) 60px 61px), repeating-linear-gradient(-45deg, transparent 0px 60px, rgba(255, 255, 255, 0.15) 60px 61px);
+  background-image: repeating-linear-gradient(45deg, transparent 1px 60px, rgba(255, 255, 255, 0.15) 60px 61px), repeating-linear-gradient(-45deg, transparent 1px 60px, rgba(255, 255, 255, 0.15) 60px 61px);
   border-image: url("../assets/border.png") 30;
   border-image-outset: 0px;
   background-clip: content-box;

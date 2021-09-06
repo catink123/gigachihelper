@@ -51,13 +51,13 @@ export default {
   setup() {
     var data = ref([]);
 
-    var savedData = localStorage.getItem("data");
+    var savedData = localStorage.getItem("GGHdata");
     if (savedData !== null) {
       data.value = JSON.parse(savedData);
     }
 
     window.addEventListener("beforeunload", () => {
-      localStorage.setItem("data", JSON.stringify(data.value));
+      localStorage.setItem("GGHdata", JSON.stringify(data.value));
     })
 
     return { data };
