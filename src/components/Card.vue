@@ -16,7 +16,10 @@
     <space class="space" :width="300" :height="400" />
     <transition name="fade">
       <div class="goal" v-if="isDone">
-        <img :src="goalImageSrc">
+        <span class="left"></span>
+        <span class="right"></span>
+        <img class="backdrop" src="@/assets/spikeything.svg" />
+        <img class="goalImage" :src="goalImageSrc">
       </div>
     </transition>
   </div>
@@ -49,18 +52,16 @@ export default {
 
     toggleDone() {
       this.$emit("toggleDone");
-    }
+    },
+
+    /* openGoalDoors(el) {
+      [...el.childNodes].filter(el => el.nodeName === "SPAN").map(val => val.classList.add("open"));
+    } */
   },
-  setup(props) {
-    var goalImageSrc;
-    lf.getItem(props.name, src => {
-      goalImageSrc = src;
-    });
+  async setup(props) {
+    var goalImageSrc = await lf.getItem(props.name);
     return {goalImageSrc};
   },
-  mounted() {
-    console.log(this.goalImageSrc);
-  }
 }
 </script>
 
@@ -184,5 +185,90 @@ button:active {
   width: 100%;
   height: 100%;
   pointer-events: none;
+  z-index: 2;
+  background: radial-gradient(rgb(181, 41, 41) 100px, rgb(92, 22, 22) 200px);
 }
+
+@keyframes imageZoom {
+  from {
+    transform: scale(0.85);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
+.goal img.goalImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: scale(0.85);
+  animation: imageZoom .5s ease-out forwards;
+  animation-delay: .35s;
+}
+
+@keyframes backdropRoll {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.goal img.backdrop {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0.25;
+  animation: backdropRoll 60s infinite linear;
+}
+
+.goal span {
+  position: absolute;
+  width: 50%;
+  height: 100%;
+  top: 0;
+  /* background: rgba(0, 0, 0, 0.75); */
+  background: repeating-linear-gradient(90deg, rgb(73, 14, 14) 0px 10px, rgb(138, 29, 29) 30px 40px, rgb(73, 14, 14) 60px 70px);
+  box-sizing: border-box;
+  border-right: 1px solid rgb(43, 8, 8);
+  z-index: 3;
+}
+
+@keyframes doorLeftOpen {
+  from {
+    transform: translateX(0%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes doorRightOpen {
+  from {
+    transform: scaleX(-1) translateX(0%);
+  }
+  to {
+    transform: scaleX(-1) translateX(-100%);
+  }
+}
+
+span.left {
+  animation: doorLeftOpen .25s ease forwards;
+  animation-delay: .25s;
+}
+
+span.right {
+  transform-origin: 100% 0%;
+  transform: scaleX(-1);
+  animation: doorRightOpen .25s ease forwards;
+  animation-delay: .25s;
+}
+
+
 </style>

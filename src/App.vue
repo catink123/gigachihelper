@@ -1,6 +1,8 @@
 <template>
   <div class="menu" v-if="data.length > 0">
     <button @click="toggleActionWindow">Добавить новую карточку</button>
+    <div class="spacer"></div>
+    <button @click="showAbout">About</button>
   </div>
 
   <div class="center emptyPage" v-else>
@@ -19,28 +21,45 @@
       />
     </div>
   </transition>
-  <transition-group class="container" tag="div" name="cards">
-    <card
-      class="card"
-      v-for="card in data"
-      :name="card.name"
-      :key="card.name"
-      :resources="card.resources"
-      :isDone="card.isDone"
-      @edit="editCard(card.name)"
-      @delete="deleteCard(card.name)"
-      @toggleDone="toggleDone(card.name)"
-    />
+  <transition-group class="container" tag="div" name="cards" mode="in-out">
+    <!-- <div class="container"> -->
+      <div
+        v-for="card in data"
+        :key="card.name">
+        <suspense>
+          <template #default>
+            <card
+              class="card"
+              :name="card.name"
+              :resources="card.resources"
+              :isDone="card.isDone"
+              @edit="editCard(card.name)"
+              @delete="deleteCard(card.name)"
+              @toggleDone="toggleDone(card.name)"
+            />
+          </template>
+          <template #fallback>
+            <!-- <div class="cardLoader" :key="card.name">Loading...</div> -->
+            <card-loader :key="card.name" />
+          </template>
+        </suspense>
+      </div>
+    <!-- </div> -->
   </transition-group>
 </template>
 
 <script>
 import ActionWindow from "./components/ActionWindow.vue";
-import Card from "./components/Card.vue";
-import { ref, readonly } from "vue";
+// import Card from "./components/Card.vue";
+import { ref, readonly, defineAsyncComponent } from "vue";
+import CardLoader from "./components/CardLoader.vue";
 
 export default {
-  components: { Card, ActionWindow },
+  components: { 
+    Card: defineAsyncComponent(() => import("./components/Card.vue")),
+    ActionWindow,
+    CardLoader
+  },
   name: "App",
   data: () => ({
     showActionWindow: false,
@@ -126,6 +145,10 @@ export default {
         this.showActionWindow = true;
       }
     },
+
+    showAbout() {
+      alert('Made by Catink123. @catink123 on any platform.');
+    },
   },
 };
 </script>
@@ -189,6 +212,21 @@ div.darkbg {
   position: relative;
 }
 
+.cardLoader {
+  /* position: absolute; */
+  width: 300px;
+  height: 400px;
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 10px;
+  margin: 15px;
+  color: white;
+  font-size: 24px;
+  font-family: sans-serif;
+  text-align: center;
+  vertical-align: middle;
+}
+
 .menu {
   display: flex;
   gap: 5px;
@@ -217,6 +255,10 @@ div.darkbg {
   background: white;
   color: black;
   transition-duration: 0s;
+}
+
+div.spacer {
+  flex-grow: 1;
 }
 
 .emptyPage p {
